@@ -3,6 +3,7 @@
 # only applicable to pure-reg operations 
 
 import re
+import os
 import logging
 from util.tree import BTree
 
@@ -121,87 +122,93 @@ def main():
     phase = 0
     instName = None
 
-    fWrite = open("andnq_r64_r64_r64.cc", "a")
-    fRead = open("andnq_r64_r64_r64.k", "r")
-    fReadLines = fRead.readlines()
-    for line in fReadLines:
-        if phase == 0:
-            exist = re.search("module", line)
-            if exist:
-                phase = 1
-                m = re.search("module (\S+)", line)
-                instName = m.group(1)
-                fWrite.write("auto instr = model.NewInstr("+instName+")\n")                
+    # read in all the files in ../x86_k
+    readPath = '../x86_k'
+    writePath = '../x86_ila'
+    for fileName in os.listdir(readPath):
+        fRead = open(readPath+'/'+fileName, "r")
+        m = re.search(r'^(.+)\.k$', fileName)
+        fWriteName = m.group(1)+'.cc'
+        fWrite = open(writePath+'/'+fWriteName, "w")
+        fReadLines = fRead.readlines()
+        for line in fReadLines:
+            if phase == 0:
+                exist = re.search("module", line)
+                if exist:
+                    phase = 1
+                    m = re.search("module (\S+)", line)
+                    instName = m.group(1)
+                    fWrite.write("auto instr = model.NewInstr("+instName+")\n")                
 
-        # if in module
-        if phase == 1:
-            exist = re.search("<k>", line)
-            if exist:
-                phase = 2
+            # if in module
+            if phase == 1:
+                exist = re.search("<k>", line)
+                if exist:
+                    phase = 2
 
-        # if in <k>
-        if phase == 2:
-            exist = re.search("<regstate>", line)
-            if exist:
-                phase = 3
+            # if in <k>
+            if phase == 2:
+                exist = re.search("<regstate>", line)
+                if exist:
+                    phase = 3
 
-        # if in <regstate>
-        if phase == 3:
-            exist = re.search(r'</regstate>', line)
-            if exist:
-                phase = 4
-                continue
-            p = re.compile(r'(\S+) \|-> (.+)')
-            res = p.search(line)
-            if res == None:
-                continue
-            reg = res.group(1)
-            update = res.group(2)
+            # if in <regstate>
+            if phase == 3:
+                exist = re.search(r'</regstate>', line)
+                if exist:
+                    phase = 4
+                    continue
+                p = re.compile(r'(\S+) \|-> (.+)')
+                res = p.search(line)
+                if res == None:
+                    continue
+                reg = res.group(1)
+                update = res.group(2)
 
-            # parse reg
-            if reg[0] == '"':
-                regPrint = reg[1] + reg[2]
-            elif reg[0:13] == 'convToRegKeys':
-                regPrint = reg[14:16]
+                # parse reg
+                if reg[0] == '"':
+                    regPrint = reg[1] + reg[2]
+                elif reg[0:13] == 'convToRegKeys':
+                    regPrint = reg[14:16]
 
-            # parse update
-            if update == '(undefMInt)':
-                continue
-            # if update is a machine integer
-            elif update[0:2] == 'mi':
-                m = re.search(r'mi\((\d+), (\d+)\)', update)
-                if m == None:
-                    logging.error('Not a valid machine integer!!')
-                bitWidth = m.group(1)
-                value = m.group(2)
-                fWrite.write("instr.SetUpdate("+regPrint+", bv("+value+", "+bitWidth+"))\n")
-            # if update is an expression
-            elif re.search(r'^\w+MInt', update):
-                tree = BTree(name=None)
-                tree = parse_expr(update, tree)
-                fWrite.write("instr.SetUpdate("+regPrint+", ")
-                toWrite = write_expr(tree)
-                fWrite.write(toWrite+')\n')
-    
-            # if update is if statement
-            elif re.search(r'^\s*\(#ifMInt', update):
-                m = re.search(r'^\s*\(#ifMInt (.+) #then (.+) #else (.+) #fi\)', update)
-                if m == None:
-                    logging.error('If statement is not matched!!')
-                ifExpr = m.group(1)
-                thenExpr = m.group(2)
-                elseExpr = m.group(3)
-                fWrite.write("instr.SetUpdate("+regPrint+", ")
-                toWrite = "Ite( "+translate(ifExpr)+', '+translate(thenExpr)+', '+translate(elseExpr)+'))\n'
-                fWrite.write(toWrite)
+                # parse update
+                if update == '(undefMInt)':
+                    continue
+                # if update is a machine integer
+                elif update[0:2] == 'mi':
+                    m = re.search(r'mi\((\d+), (\d+)\)', update)
+                    if m == None:
+                        logging.error('Not a valid machine integer!!')
+                    bitWidth = m.group(1)
+                    value = m.group(2)
+                    fWrite.write("instr.SetUpdate("+regPrint+", bv("+value+", "+bitWidth+"))\n")
+                # if update is an expression
+                elif re.search(r'^\w+MInt', update):
+                    tree = BTree(name=None)
+                    tree = parse_expr(update, tree)
+                    fWrite.write("instr.SetUpdate("+regPrint+", ")
+                    toWrite = write_expr(tree)
+                    fWrite.write(toWrite+')\n')
+        
+                # if update is if statement
+                elif re.search(r'^\s*\(#ifMInt', update):
+                    m = re.search(r'^\s*\(#ifMInt (.+) #then (.+) #else (.+) #fi\)', update)
+                    if m == None:
+                        logging.error('If statement is not matched!!')
+                    ifExpr = m.group(1)
+                    thenExpr = m.group(2)
+                    elseExpr = m.group(3)
+                    fWrite.write("instr.SetUpdate("+regPrint+", ")
+                    toWrite = "Ite( "+translate(ifExpr)+', '+translate(thenExpr)+', '+translate(elseExpr)+'))\n'
+                    fWrite.write(toWrite)
 
-                #while m = re.search(r'^\s*(\w+)MInt\( (\w+)MInt\((.*)\)|getParentValue\((.*)\)|(mi.*)(, )', update):
+                    #while m = re.search(r'^\s*(\w+)MInt\( (\w+)MInt\((.*)\)|getParentValue\((.*)\)|(mi.*)(, )', update):
 
-        if phase == 4:
-            fWrite.write('RECORD_INST("'+instName+'");\n')
-            fWrite.close()
-            fRead.close()
-            break
+            if phase == 4:
+                fWrite.write('RECORD_INST("'+instName+'");\n')
+                fWrite.close()
+                fRead.close()
+                break
 
 
 if __name__ == "__main__":
