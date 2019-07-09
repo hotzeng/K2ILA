@@ -123,8 +123,8 @@ def main():
     instName = None
 
     # read in all the files in ../x86_k
-    readPath = '../x86_k'
-    writePath = '../x86_ila'
+    readPath = '../x86_k/semantics/registerInstructions'
+    writePath = '../x86_ila/semantics/registerInstructions'
     for fileName in os.listdir(readPath):
         fRead = open(readPath+'/'+fileName, "r")
         m = re.search(r'^(.+)\.k$', fileName)
