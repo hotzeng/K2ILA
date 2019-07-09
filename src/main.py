@@ -123,6 +123,7 @@ def main():
     instName = None
 
     # read in all the files in ../x86_k
+    # FIXME: Change the readPath and writePath to operate on different files!
     readPath = '../x86_k/semantics/registerInstructions'
     writePath = '../x86_ila/semantics/registerInstructions'
     for fileName in os.listdir(readPath):
