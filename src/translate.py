@@ -133,6 +133,7 @@ def main():
         fWrite = open(writePath+'/'+fWriteName, "w")
         fReadLines = fRead.readlines()
         for line in fReadLines:
+            isReg = 0
             if phase == 0:
                 exist = re.search("module", line)
                 if exist:
@@ -171,6 +172,7 @@ def main():
                     regPrint = reg[1] + reg[2]
                 elif reg[0:13] == 'convToRegKeys':
                     regPrint = reg[14:16]
+                    isReg = 1
 
                 # parse update
                 if update == '(undefMInt)':
@@ -182,12 +184,18 @@ def main():
                         logging.error('Not a valid machine integer!!')
                     bitWidth = m.group(1)
                     value = m.group(2)
-                    fWrite.write("instr.SetUpdate("+regPrint+", bv("+value+", "+bitWidth+"))\n")
+                    if !isReg:
+                        fWrite.write("instr.SetUpdate("+regPrint+", bv("+value+", "+bitWidth+"))\n")
+                    else:
+                        fWrite.write("UPDATE_R("+regPrint+", bv("+value+", "+bitWidth+"))\n")
                 # if update is an expression
                 elif re.search(r'^\w+MInt', update):
                     tree = BTree(name=None)
                     tree = parse_expr(update, tree)
-                    fWrite.write("instr.SetUpdate("+regPrint+", ")
+                    if !isReg:
+                        fWrite.write("instr.SetUpdate("+regPrint+", ")
+                    else:
+                        fWrite.write("UPDATE_R("+regPrint+", ")
                     toWrite = write_expr(tree)
                     fWrite.write(toWrite+')\n')
         
@@ -199,7 +207,10 @@ def main():
                     ifExpr = m.group(1)
                     thenExpr = m.group(2)
                     elseExpr = m.group(3)
-                    fWrite.write("instr.SetUpdate("+regPrint+", ")
+                    if !isReg:                    
+                        fWrite.write("instr.SetUpdate("+regPrint+", ")
+                    else:
+                        fWrite.write("UPDATE_R("+regPrint+", ")
                     toWrite = "Ite( "+translate(ifExpr)+', '+translate(thenExpr)+', '+translate(elseExpr)+'))\n'
                     fWrite.write(toWrite)
 
