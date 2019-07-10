@@ -2,7 +2,7 @@
 ## Translating x86 ISA k-semantics to ILA model
 There are 3155 instructions with k-semantics. We need to write translation scripts for them. Also, some improvements need to be done, for example, add 'pc' update to all instructions, add some implicit states to some instructions(string modifying instructions). 
 
-The x86 ISA k-semantics mainly contain two parts: the semantics of individual instructions(in the /semantics/*Instructions folders), and semantics of execution environment(the x86-*.k files).
+The x86 ISA k-semantics mainly contain two parts: the semantics of individual instructions(in the /semantics/\*Instructions folders), and semantics of execution environment(the x86-\*.k files).
 
 
 ## Translating x86 decoding k-semantics to ILA model
