@@ -1,4 +1,6 @@
 When you are sure one instruction model is correct, change its state to 'DONE'
+Also, put the correct ILA model in 'x86\_ila\_golden' folder!
+This is necessary because later changes to the script may modify previous generated ILA model, and we need to check all the models against golden every time.
 
 ## Register Instructions
 Instructions | Status | Author

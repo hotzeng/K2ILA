@@ -12,16 +12,16 @@ class x86ILA_user {
 
   Ila model;
   
-  ExprRef EIP;
-  // physical memory, size of 2^36
-  ExprRef physicalMem;
+  ExprRef IP;                   // can be EIP or RIP
+  ExprRef physicalMem;          // physical memory, size of 2^36
 
-  std::vector<ExprRef> GPR;
-  std::vector<ExprRef> SegReg; //segment registers
+  std::vector<ExprRef> GPR;     // 8 in 32bit, 16 in 64bit
+  std::vector<ExprRef> SegReg;  // 6 segment registers
   std::vector<ExprRef> EFLAGS;
 
   // at leat 3 working modes, default to be protected
   ExprRef work_mode;
+  ExprRef long_mode;
 
   // read one byte of instruction each time
   std::vector<ExprRef> inst_byte;
