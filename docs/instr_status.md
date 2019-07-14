@@ -6,7 +6,7 @@ This is necessary because later changes to the script may modify previous genera
 Instructions | Status | Author
 -------------|--------|-------
 andnq\_r64\_r64\_64 | DONE  | Yu
-andb\_r8\_rh        | TODO  |
+andb\_r8\_rh        | DONE  | Yu
 blsil\_r32\_r32     | TODO  |
 cmovael\_r32\_r32   | TODO  |
 divb\_r8            | TODO  |

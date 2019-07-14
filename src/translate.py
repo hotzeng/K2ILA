@@ -15,11 +15,70 @@ def set_root(root, expression):
     return root
 
 
+def toInt(expr):
+    m = re.search('\d+', expr)
+    return m.group(0)
+
+
+def de_bracket(expr):
+# if there is a opening bracket at the beginning, remove the closing bracket at the end
+    m = re.search(r'^\s*\(', expr)
+    if m != None:
+        m2 = re.search(r'^\s*\((.*)\)\s*$', expr)
+        return m2.group(1)
+    else:
+        return expr
+
+
+def de_nest_bool(expr):
+# find the top-level bool expr
+    exprList = list(expr)
+    bracketNo = 0
+    for i in range(len(exprList)):
+        if exprList[i] == '(':
+            bracketNo += 1
+        elif exprList[i] == ')':
+            bracketNo -= 1
+        elif len(exprList) - i >= 4 and \
+             ''.join(exprList[i:i+4]) == 'Bool' and bracketNo == 0:
+                exprList[i] = 'b'
+    if bracketNo != 0:
+        print("Wrong de-bracket!")
+    assert bracketNo == 0
+    return ''.join(exprList)
+
+
+# Attention: *Bool expressions should have higher priority over *MInt
 def parse_expr(expr, root=None, isEqual=0):
 
-    m = re.search(r'^\s*(\w+)MInt\((.+)\)', expr)
+    expr = de_bracket(expr)
+    expr = de_nest_bool(expr)
+
+    #""" *bool is the top-level expr, *Bool is not """
+    if re.search(r'^\s*notbool ', expr):
+        m = re.search(r'^\s*notbool (.+)', expr)
+        root = set_root(root, 'notBool')
+        root.set_children_no(1)
+        root.children[0] = parse_expr(m.group(1), root.children[0])
+
+    elif re.search(r' andbool ', expr):
+        m = re.search(r'(.+) andbool (.+)', expr)
+        root = set_root(root, 'andBool')
+        root.set_children_no(2)
+        root.children[0] = parse_expr(m.group(1), root.children[0])
+        root.children[1] = parse_expr(m.group(2), root.children[1])
+ 
+
+    elif re.search(r' xorbool ', expr):
+        m = re.search(r'(.+) xorbool (.+)', expr)
+        root = set_root(root, 'xorBool')
+        root.set_children_no(2)
+        root.children[0] = parse_expr(m.group(1), root.children[0])
+        root.children[1] = parse_expr(m.group(2), root.children[1])
+
     # if this is an expr
-    if m != None:
+    elif re.search(r'^\s*(\w+)MInt\((.+)\)', expr):
+        m = re.search(r'^\s*(\w+)MInt\((.+)\)', expr)
         op = m.group(1)
         params = list(m.group(2))
         isEqual = 0
@@ -27,19 +86,15 @@ def parse_expr(expr, root=None, isEqual=0):
             isEqual = 1
         # instantiate the tree
         root = set_root(root, op)
-        #if root == None:
-        #    root = BTree(name=op)
-        #else:
-        #    root.set_name(op)
 
         assert root != None
-        # replace , with |
+        # replace ',' with '|' to extract children 
         parenthesesNo = 0
         for i in range(len(params)):
             if params[i] == '(':
-                parenthesesNo = parenthesesNo + 1
+                parenthesesNo += 1
             elif params[i] == ')':
-                parenthesesNo = parenthesesNo - 1
+                parenthesesNo -= 1
             elif params[i] == ',':
                 if parenthesesNo == 0:
                     params[i] = '|'
@@ -61,13 +116,10 @@ def parse_expr(expr, root=None, isEqual=0):
 
     # if this is a digital number
     elif re.fullmatch(r'\s*\d+', expr):
-        if root == None:
-            root = BTree(name=expr)
-        else:
-            root.set_name(expr)
+        root = set_root(root, repr(expr))
 
     # if this is a machine integer
-    elif re.fullmatch(r'\s*mi\((\d+), (\d+)\)', expr):
+    elif re.search(r'^\s*mi\((\d+), (\d+)\)', expr):
         m = re.search(r'\s*mi\((\d+), (\d+)\)', expr)
         width = m.group(1)
         value = m.group(2)
@@ -76,6 +128,8 @@ def parse_expr(expr, root=None, isEqual=0):
         else:
             root = set_root(root, 'BvConst('+value+', '+width+')')
 
+    else:
+        logging.error('Not supported keyword: '+repr(expr))
     #TODO: More 'elif' to be added
     return root
 
@@ -86,19 +140,36 @@ def write_expr(root):
     if repr(root) == 'extract':
         assert len(root.children) == 3
         # FIXME: 63 or 31?
-        return repr(root.children[0]) + '(' + str(63-int(repr(root.children[1]))) + ', ' + str(63-int(repr(root.children[2]))+1) + ')'
+        return repr(root.children[0]) + '(' + str(63-int(toInt(repr(root.children[1])))) + ', ' + str(63-int(toInt(repr(root.children[2])))+1) + ')'
+
+    elif repr(root) == 'concatenate':
+        assert len(root.children) == 2
+        return 'Concat(' + write_expr(root.children[0]) + ', ' + write_expr(root.children[1]) + ')'
 
     elif repr(root) == 'neg':
         assert len(root.children) == 1
-        return '~'+write_expr(root.children[0])
+        return '~' + write_expr(root.children[0])
 
     elif repr(root) == 'and':
         assert len(root.children) == 2
-        return write_expr(root.children[0])+' & '+write_expr(root.children[1])
+        return write_expr(root.children[0]) + ' & ' + write_expr(root.children[1])
     
     elif repr(root) == 'eq':
         assert len(root.children) == 2
-        return write_expr(root.children[0])+" == "+write_expr(root.children[1])
+        return write_expr(root.children[0]) + " == " + write_expr(root.children[1])
+
+    # TODO: merge the *Bool and *MInt operators??
+    elif repr(root) == 'notBool':
+        assert len(root.children) == 1
+        return '~ (' + write_expr(root.children[0]) + ')'
+
+    elif repr(root) == 'xorBool':
+        assert len(root.children) == 2
+        return '(' + write_expr(root.children[0]) + ') ^ (' + write_expr(root.children[1]) + ')'
+
+    elif repr(root) == 'andBool':
+        assert len(root.children) == 2
+        return '(' + write_expr(root.children[0]) + ' & ' + write_expr(root.children[1]) + ')'
 
     elif re.fullmatch(r'\s*R\d+', repr(root)):
         return repr(root)
@@ -108,8 +179,9 @@ def write_expr(root):
 
     elif re.fullmatch(r'\s*BvConst\(\d+, \d+\)\s*', repr(root)):
         return repr(root)
+
     else:
-        logging.error('Not a supported expression:'+repr(root))
+        logging.error('Not a supported expression: '+repr(root))
     #TODO: More 'elif' to be added
 
 
@@ -197,9 +269,9 @@ def process_file(readPath, writePath, fileName):
                 m = re.search(r'^\s*\(#ifMInt (.+) #then (.+) #else (.+) #fi\)', update)
                 if m == None:
                     logging.error('If statement is not matched!!')
-                ifExpr = m.group(1)
-                thenExpr = m.group(2)
-                elseExpr = m.group(3)
+                ifExpr = de_bracket(m.group(1))
+                thenExpr = de_bracket(m.group(2))
+                elseExpr = de_bracket(m.group(3))
                 if isReg == 0:                    
                     fWrite.write("instr.SetUpdate("+regPrint+", ")
                 else:
@@ -235,7 +307,7 @@ def main():
     writePath = '../x86_ila/semantics/registerInstructions'
     fileName = None
     # FIXME: specify the file name if you want to run on only one file
-    fileName = 'andnq_r64_r64_r64.k'
+    fileName = 'andb_r8_rh.k'
     if fileName != None:
         process_file(readPath, writePath, fileName)
     else:
