@@ -7,6 +7,17 @@ import os
 import logging
 from util.tree import BTree
 
+def is_flag(expr):
+    if expr == 'CF' or \
+            expr == 'PF' or \
+            expr == 'AF' or \
+            expr == 'ZF' or \
+            expr == 'SF' or \
+            expr == 'OF':
+                return True
+    else:
+        return False
+
 def set_root(root, expression):
     if root == None:
         root = BTree(name=expression)
@@ -30,6 +41,21 @@ def de_bracket(expr):
         return expr
 
 
+def pick_top_comma(params):
+    params = list(params)
+    parenthesesNo = 0
+    for i in range(len(params)):
+        if params[i] == '(':
+            parenthesesNo += 1
+        elif params[i] == ')':
+            parenthesesNo -= 1
+        elif params[i] == ',':
+            if parenthesesNo == 0:
+                params[i] = '|'
+
+    return ''.join(params)
+
+
 def de_nest_bool(expr):
 # find the top-level bool expr
     exprList = list(expr)
@@ -42,9 +68,7 @@ def de_nest_bool(expr):
         elif len(exprList) - i >= 4 and \
              ''.join(exprList[i:i+4]) == 'Bool' and bracketNo == 0:
                 exprList[i] = 'b'
-    if bracketNo != 0:
-        print("Wrong de-bracket!")
-    assert bracketNo == 0
+    assert bracketNo == 0, "Wrong de-bracket, expr:" + expr
     return ''.join(exprList)
 
 
@@ -76,51 +100,75 @@ def parse_expr(expr, root=None, isEqual=0):
         root.children[0] = parse_expr(m.group(1), root.children[0])
         root.children[1] = parse_expr(m.group(2), root.children[1])
 
+    elif re.search(r'^\s*(\()?#ifMInt', expr):
+        m = re.search(r'^\s*(\()?#ifMInt (.+) #then (.+) #else (.+) #fi(\))?', expr)
+        ifExpr = de_bracket(m.group(2))
+        thenExpr = de_bracket(m.group(3))
+        elseExpr = de_bracket(m.group(4))
+        root = set_root(root, 'if')
+        root.set_children_no(3)
+        root.children[0] = parse_expr(ifExpr,   root.children[0])
+        root.children[1] = parse_expr(thenExpr, root.children[1])
+        root.children[2] = parse_expr(elseExpr, root.children[2])
+
     # if this is an expr
     elif re.search(r'^\s*(\w+)MInt\((.+)\)', expr):
         m = re.search(r'^\s*(\w+)MInt\((.+)\)', expr)
         op = m.group(1)
-        params = list(m.group(2))
+        params = m.group(2)
         isEqual = 0
         if op == 'eq':
             isEqual = 1
         # instantiate the tree
         root = set_root(root, op)
 
-        assert root != None
         # replace ',' with '|' to extract children 
-        parenthesesNo = 0
-        for i in range(len(params)):
-            if params[i] == '(':
-                parenthesesNo += 1
-            elif params[i] == ')':
-                parenthesesNo -= 1
-            elif params[i] == ',':
-                if parenthesesNo == 0:
-                    params[i] = '|'
-
-        params = ''.join(params)
+        params = pick_top_comma(params)
         children = re.split(r'\|', params)
         # parse children
         root.set_children_no(len(children))
         for i in range(len(children)):
             root.children[i] = parse_expr(children[i], root.children[i], isEqual)
 
+    elif re.search(r'^\s*div_remainder_\w+', expr):
+        m = re.search(r'^\s*div_remainder_\w+\((.+)\)$', expr)
+        params = m.group(1)
+        root = set_root(root, 'urem')
+        params = pick_top_comma(params)
+        children = re.split(r'\|', params)
+        assert len(children) == 2, 'Wrong number of children'
+        root.set_children_no(2)
+        root.children[0] = parse_expr(children[0], root.children[0])
+        root.children[1] = parse_expr(children[1], root.children[1])
+
+    elif re.search(r'^\s*div_quotient_\w+', expr):
+        m = re.search(r'^\s*div_quotient_\w+\((.+)\)$', expr)
+        params = m.group(1)        
+        root = set_root(root, 'div')
+        params = pick_top_comma(params)
+        children = re.split(r'\|', params)
+        assert len(children) == 2, 'Wrong number of children'
+        root.set_children_no(2)
+        root.children[0] = parse_expr(children[0], root.children[0])
+        root.children[1] = parse_expr(children[1], root.children[1])
+
     # if this is a reg
-    elif re.search(r'^\s+getParentValue', expr):
-        m = re.search(r'^\s+getParentValue\((R\d+), RSMap\)', expr)
-        if root == None:
-            root = BTree(name=m.group(1))
-        else:
-            root.set_name(m.group(1))
+    elif re.search(r'^\s*getParentValue', expr):
+        m = re.search(r'^\s+getParentValue\(%?(\w+), RSMap\)', expr)
+        root = set_root(root, m.group(1))
+
+    # if this is a flag
+    elif re.search(r'^\s*getFlag', expr):
+        m = re.search(r'^\s*getFlag\("(\w+)", RSMap\)', expr)
+        root = set_root(root, 'flag_'+m.group(1))
 
     # if this is a digital number
     elif re.fullmatch(r'\s*\d+', expr):
         root = set_root(root, repr(expr))
 
     # if this is a machine integer
-    elif re.search(r'^\s*mi\((\d+), (\d+)\)', expr):
-        m = re.search(r'\s*mi\((\d+), (\d+)\)', expr)
+    elif re.search(r'^\s*mi\((\d+),\s*(\d+)\)', expr):
+        m = re.search(r'\s*mi\((\d+),\s*(\d+)\)', expr)
         width = m.group(1)
         value = m.group(2)
         if isEqual == 0:
@@ -148,15 +196,27 @@ def write_expr(root):
 
     elif repr(root) == 'neg':
         assert len(root.children) == 1
-        return '~' + write_expr(root.children[0])
+        return '~ (' + write_expr(root.children[0]) + ')'
 
     elif repr(root) == 'and':
         assert len(root.children) == 2
-        return write_expr(root.children[0]) + ' & ' + write_expr(root.children[1])
+        return '(' + write_expr(root.children[0]) + ') & (' + write_expr(root.children[1]) + ')'
     
     elif repr(root) == 'eq':
         assert len(root.children) == 2
-        return write_expr(root.children[0]) + " == " + write_expr(root.children[1])
+        return '(' + write_expr(root.children[0]) + ') == (' + write_expr(root.children[1]) + ')'
+
+    elif repr(root) == 'add':
+        assert len(root.children) == 2
+        return '(' + write_expr(root.children[0]) + ') + (' + write_expr(root.children[1]) + ')'
+
+    elif repr(root) == 'div':
+        assert len(root.children) == 2
+        return '(' + write_expr(root.children[0]) + ') / (' + write_expr(root.children[1]) + ')'
+
+    elif repr(root) == 'urem':
+        assert len(root.children) == 2
+        return 'URem(' + write_expr(root.children[0]) + ', ' + write_expr(root.children[1]) + ')'
 
     # TODO: merge the *Bool and *MInt operators??
     elif repr(root) == 'notBool':
@@ -169,7 +229,7 @@ def write_expr(root):
 
     elif repr(root) == 'andBool':
         assert len(root.children) == 2
-        return '(' + write_expr(root.children[0]) + ' & ' + write_expr(root.children[1]) + ')'
+        return '(' + write_expr(root.children[0]) + ') & (' + write_expr(root.children[1]) + ')'
 
     elif re.fullmatch(r'\s*R\d+', repr(root)):
         return repr(root)
@@ -179,6 +239,14 @@ def write_expr(root):
 
     elif re.fullmatch(r'\s*BvConst\(\d+, \d+\)\s*', repr(root)):
         return repr(root)
+
+    elif re.fullmatch(r'flag_\w+', repr(root)):
+        m = re.fullmatch(r'flag_(\w+)', repr(root))
+        return m.group(1)
+
+    elif re.fullmatch(r'if', repr(root)):
+        toWrite = "Ite( "+write_expr(root.children[0])+', '+write_expr(root.children[1])+', '+write_expr(root.children[2])+')'
+        return toWrite
 
     else:
         logging.error('Not a supported expression: '+repr(root))
@@ -233,10 +301,14 @@ def process_file(readPath, writePath, fileName):
             update = res.group(2)
 
             # parse reg
-            if reg[0] == '"':
-                regPrint = reg[1] + reg[2]
+            if re.search(r'^"(\w+)"$', reg):
+                m = re.search(r'^"(\w+)"$', reg)
+                regPrint = m.group(1)
+                if is_flag(regPrint) == False:
+                    isReg = 1
             elif reg[0:13] == 'convToRegKeys':
-                regPrint = reg[14:16]
+                m = re.search(r'convToRegKeys\((w+)\)', reg)
+                regPrint = m.group(1)
                 isReg = 1
 
             # parse update
@@ -253,6 +325,7 @@ def process_file(readPath, writePath, fileName):
                     fWrite.write("instr.SetUpdate("+regPrint+", bv("+value+"));\n")
                 else:
                     fWrite.write("UPDATE_R("+regPrint+", bv("+value+"));\n")
+
             # if update is an expression
             elif re.search(r'^\w+MInt', update):
                 tree = BTree(name=None)
@@ -307,7 +380,7 @@ def main():
     writePath = '../x86_ila/semantics/registerInstructions'
     fileName = None
     # FIXME: specify the file name if you want to run on only one file
-    fileName = 'andb_r8_rh.k'
+    fileName = 'divb_r8.k'
     if fileName != None:
         process_file(readPath, writePath, fileName)
     else:

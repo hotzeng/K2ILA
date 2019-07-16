@@ -7,9 +7,9 @@ Instructions | Status | Author
 -------------|--------|-------
 andnq\_r64\_r64\_64 | DONE  | Yu
 andb\_r8\_rh        | DONE  | Yu
-blsil\_r32\_r32     | TODO  |
-cmovael\_r32\_r32   | TODO  |
-divb\_r8            | TODO  |
+blsil\_r32\_r32     | DONE  | Yu
+cmovael\_r32\_r32   | Doing | Yu
+divb\_r8            | DONE  | Yu
 mulb\_rh            | TODO  |
 orb\_r8\_r8         | TODO  |
 rorl\_r32\_one      | TODO  |
