@@ -210,6 +210,10 @@ def write_expr(root):
         assert len(root.children) == 2
         return '(' + write_expr(root.children[0]) + ') + (' + write_expr(root.children[1]) + ')'
 
+    elif repr(root) == 'mul':
+        assert len(root.children) == 2
+        return '(' + write_expr(root.children[0]) + ') * (' + write_expr(root.children[1]) + ')'        
+
     elif repr(root) == 'div':
         assert len(root.children) == 2
         return '(' + write_expr(root.children[0]) + ') / (' + write_expr(root.children[1]) + ')'
@@ -217,6 +221,10 @@ def write_expr(root):
     elif repr(root) == 'urem':
         assert len(root.children) == 2
         return 'URem(' + write_expr(root.children[0]) + ', ' + write_expr(root.children[1]) + ')'
+
+    elif repr(root) == 'or':
+        assert len(root.children) == 2
+        return '(' + write_expr(root.children[0]) + ') | (' + write_expr(root.children[1]) + ')'
 
     # TODO: merge the *Bool and *MInt operators??
     elif repr(root) == 'notBool':
@@ -307,7 +315,7 @@ def process_file(readPath, writePath, fileName):
                 if is_flag(regPrint) == False:
                     isReg = 1
             elif reg[0:13] == 'convToRegKeys':
-                m = re.search(r'convToRegKeys\((w+)\)', reg)
+                m = re.search(r'convToRegKeys\((\w+)\)', reg)
                 regPrint = m.group(1)
                 isReg = 1
 
@@ -380,7 +388,7 @@ def main():
     writePath = '../x86_ila/semantics/registerInstructions'
     fileName = None
     # FIXME: specify the file name if you want to run on only one file
-    fileName = 'divb_r8.k'
+    fileName = 'orb_r8_r8.k'
     if fileName != None:
         process_file(readPath, writePath, fileName)
     else:

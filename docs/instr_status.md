@@ -10,8 +10,8 @@ andb\_r8\_rh        | DONE  | Yu
 blsil\_r32\_r32     | DONE  | Yu
 cmovael\_r32\_r32   | Doing | Yu
 divb\_r8            | DONE  | Yu
-mulb\_rh            | TODO  |
-orb\_r8\_r8         | TODO  |
+mulb\_rh            | Doing | Yu
+orb\_r8\_r8         | DONE  | Yu
 rorl\_r32\_one      | TODO  |
 
 
