@@ -1,0 +1,10 @@
+auto instr = model.NewInstr("negq_r64");
+UPDATE_R(R1, (bv(1)) + (~ (R1)));
+instr.SetUpdate(CF, Ite( ~ ((R1) == (BvConst(0, 64))), bv(1), bv(0)));
+instr.SetUpdate(PF, Ite( ~ (((((((((add(0, 0)) == (BvConst(1, 1))) ^ ((add(1, 1)) == (BvConst(1, 1)))) ^ ((add(2, 2)) == (BvConst(1, 1)))) ^ ((add(3, 3)) == (BvConst(1, 1)))) ^ ((add(4, 4)) == (BvConst(1, 1)))) ^ ((add(5, 5)) == (BvConst(1, 1)))) ^ ((add(6, 6)) == (BvConst(1, 1)))) ^ ((add(7, 7)) == (BvConst(1, 1)))), bv(1), bv(0)));
+instr.SetUpdate(AF, Ite( ((R1(4, 4)) == (BvConst(1, 1))) ^ ((add(4, 4)) == (BvConst(1, 1))), bv(1), bv(0)));
+instr.SetUpdate(ZF, Ite( ((bv(1)) + (~ (R1))) == (BvConst(0, 64)), bv(1), bv(0)));
+instr.SetUpdate(SF, add(63, 63));
+instr.SetUpdate(OF, Ite( ((R1(63, 63)) == (BvConst(1, 1))) & ((add(63, 63)) == (BvConst(1, 1))), bv(1), bv(0)));
+instr.SetUpdate(rip, nxt_rip);
+RECORD_INST("negq_r64");

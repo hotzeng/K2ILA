@@ -1,0 +1,4 @@
+# ignore temporal files
+*.swo
+*.swp
+*.swq

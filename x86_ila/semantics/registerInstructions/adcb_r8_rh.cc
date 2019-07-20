@@ -1,0 +1,10 @@
+auto instr = model.NewInstr("adcb_r8_rh");
+UPDATE_R(R2, Concat(R2(63, 8), add(62, 55)));
+instr.SetUpdate(CF, add(63, 63));
+instr.SetUpdate(PF, Ite( ~ (((((((((add(55, 55)) == (BvConst(1, 1))) ^ ((add(56, 56)) == (BvConst(1, 1)))) ^ ((add(57, 57)) == (BvConst(1, 1)))) ^ ((add(58, 58)) == (BvConst(1, 1)))) ^ ((add(59, 59)) == (BvConst(1, 1)))) ^ ((add(60, 60)) == (BvConst(1, 1)))) ^ ((add(61, 61)) == (BvConst(1, 1)))) ^ ((add(62, 62)) == (BvConst(1, 1)))), bv(1), bv(0)));
+instr.SetUpdate(AF, ((R1(12, 12)) ^ (R2(4, 4))) ^ (add(59, 59)));
+instr.SetUpdate(ZF, Ite( (add(62, 55)) == (BvConst(0, 8)), bv(1), bv(0)));
+instr.SetUpdate(SF, add(62, 62));
+instr.SetUpdate(OF, Ite( ((R1(15, 15)) == (BvConst(1, 1))) == ((R2(7, 7)) == ((bv(1)) == ((add(62, 62)) == (BvConst(1, 1))))), bv(1), bv(0)));
+instr.SetUpdate(rip, nxt_rip);
+RECORD_INST("adcb_r8_rh");

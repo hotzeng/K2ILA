@@ -12,13 +12,14 @@ cmovael\_r32\_r32   | Doing | Yu
 divb\_r8            | DONE  | Yu
 mulb\_rh            | Doing | Yu
 orb\_r8\_r8         | DONE  | Yu
-rorl\_r32\_one      | TODO  |
-
+rorb\_r8\_one       | DONE  | Yu
+rorl\_r32\_one      | DONE  | Yu
+rorq\_r64\_one      | DONE  | Yu
 
 ## Immediate Instructions
 Instructions | Status | Author
 -------------|--------|-------
-addl\_eax\_imm32    | TODO  |
+addl\_eax\_imm32    | DONE  | Yu
 cmpq\_r64\_label    | TODO  |
 testl\_r32\_imm32   | TODO  |
 

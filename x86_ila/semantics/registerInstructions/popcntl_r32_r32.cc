@@ -1,0 +1,10 @@
+auto instr = model.NewInstr("popcntl_r32_r32");
+UPDATE_R(R2, Concat(bv(0), (Concat(bv(0), (Concat(bv(0), (Concat(bv(0), (Concat(bv(0), (Concat(bv(0), R1(31, 31))) + (Concat(bv(0), R1(30, 30))))) + (Concat(bv(0), (Concat(bv(0), R1(29, 29))) + (Concat(bv(0), R1(28, 28))))))) + (Concat(bv(0), (Concat(bv(0), (Concat(bv(0), R1(27, 27))) + (Concat(bv(0), R1(26, 26))))) + (Concat(bv(0), (Concat(bv(0), R1(25, 25))) + (Concat(bv(0), R1(24, 24))))))))) + (Concat(bv(0), (Concat(bv(0), (Concat(bv(0), (Concat(bv(0), R1(23, 23))) + (Concat(bv(0), R1(22, 22))))) + (Concat(bv(0), (Concat(bv(0), R1(21, 21))) + (Concat(bv(0), R1(20, 20))))))) + (Concat(bv(0), (Concat(bv(0), (Concat(bv(0), R1(19, 19))) + (Concat(bv(0), R1(18, 18))))) + (Concat(bv(0), (Concat(bv(0), R1(17, 17))) + (Concat(bv(0), R1(16, 16))))))))))) + (Concat(bv(0), (Concat(bv(0), (Concat(bv(0), (Concat(bv(0), (Concat(bv(0), R1(15, 15))) + (Concat(bv(0), R1(14, 14))))) + (Concat(bv(0), (Concat(bv(0), R1(13, 13))) + (Concat(bv(0), R1(12, 12))))))) + (Concat(bv(0), (Concat(bv(0), (Concat(bv(0), R1(11, 11))) + (Concat(bv(0), R1(10, 10))))) + (Concat(bv(0), (Concat(bv(0), R1(9, 9))) + (Concat(bv(0), R1(8, 8))))))))) + (Concat(bv(0), (Concat(bv(0), (Concat(bv(0), (Concat(bv(0), R1(7, 7))) + (Concat(bv(0), R1(6, 6))))) + (Concat(bv(0), (Concat(bv(0), R1(5, 5))) + (Concat(bv(0), R1(4, 4))))))) + (Concat(bv(0), (Concat(bv(0), (Concat(bv(0), R1(3, 3))) + (Concat(bv(0), R1(2, 2))))) + (Concat(bv(0), (Concat(bv(0), R1(1, 1))) + (Concat(bv(0), R1(0, 0)))))))))))));
+instr.SetUpdate(CF, bv(0));
+instr.SetUpdate(PF, bv(0));
+instr.SetUpdate(AF, bv(0));
+instr.SetUpdate(ZF, Ite( (R1(31, 0)) == (BvConst(0, 32)), bv(1), bv(0)));
+instr.SetUpdate(SF, bv(0));
+instr.SetUpdate(OF, bv(0));
+instr.SetUpdate(rip, nxt_rip);
+RECORD_INST("popcntl_r32_r32");

@@ -1,0 +1,10 @@
+auto instr = model.NewInstr("popcntw_r16_r16");
+UPDATE_R(R2, Concat(R2(63, 16), (Concat(bv(0), (Concat(bv(0), (Concat(bv(0), (Concat(bv(0), R1(15, 15))) + (Concat(bv(0), R1(14, 14))))) + (Concat(bv(0), (Concat(bv(0), R1(13, 13))) + (Concat(bv(0), R1(12, 12))))))) + (Concat(bv(0), (Concat(bv(0), (Concat(bv(0), R1(11, 11))) + (Concat(bv(0), R1(10, 10))))) + (Concat(bv(0), (Concat(bv(0), R1(9, 9))) + (Concat(bv(0), R1(8, 8))))))))) + (Concat(bv(0), (Concat(bv(0), (Concat(bv(0), (Concat(bv(0), R1(7, 7))) + (Concat(bv(0), R1(6, 6))))) + (Concat(bv(0), (Concat(bv(0), R1(5, 5))) + (Concat(bv(0), R1(4, 4))))))) + (Concat(bv(0), (Concat(bv(0), (Concat(bv(0), R1(3, 3))) + (Concat(bv(0), R1(2, 2))))) + (Concat(bv(0), (Concat(bv(0), R1(1, 1))) + (Concat(bv(0), R1(0, 0)))))))))));
+instr.SetUpdate(CF, bv(0));
+instr.SetUpdate(PF, bv(0));
+instr.SetUpdate(AF, bv(0));
+instr.SetUpdate(ZF, Ite( (R1(15, 0)) == (BvConst(0, 16)), bv(1), bv(0)));
+instr.SetUpdate(SF, bv(0));
+instr.SetUpdate(OF, bv(0));
+instr.SetUpdate(rip, nxt_rip);
+RECORD_INST("popcntw_r16_r16");
