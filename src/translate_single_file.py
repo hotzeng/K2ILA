@@ -24,6 +24,7 @@ def to_imme(expr):
     else:
         logging.error('Cannot convert to int!')
 
+
 def is_flag(expr):
     if expr == 'CF' or \
             expr == 'PF' or \
@@ -34,6 +35,7 @@ def is_flag(expr):
                 return True
     else:
         return False
+
 
 def set_root(root, expression):
     if root == None:
@@ -350,7 +352,6 @@ def translate(expr):
 
 def process_require(readPath, fileName):
     fRead = open(readPath+'/'+fileName, "r")
-    fWrite = open(readPath+'/'+fileName+'_new', "w")
     fReadLines = fRead.readlines()
     regs = []
     updates = defaultdict(list)
@@ -360,7 +361,7 @@ def process_require(readPath, fileName):
             m = re.search(r'(\S+) \|-> (.+)', line)
             reg = m.group(1)
             update = m.group(2)
-            if !(reg in updates):
+            if reg not in updates:
                 regs.append(reg)
             updates[reg].append(update)
         elif re.search(r'requires', line):
@@ -368,110 +369,125 @@ def process_require(readPath, fileName):
             conditions.append(m.group(1))
 
 
+def translate_update(update, fWrite=None):
+
+    toWrite = None
+    if update == '(undefMInt)':
+        return
+    # if update is a machine integer
+    elif update[0:2] == 'mi':
+        m = re.search(r'mi\((\d+), (\d+)\)', update)
+        if m == None:
+            logging.error('Not a valid machine integer!!')
+        bitWidth = m.group(1)
+        value = m.group(2)
+        toWrite = "bv("+value+"));\n"
+
+    # if update is an expression
+    elif re.search(r'^\w+MInt', update):
+        tree = BTree(name=None)
+        tree = parse_expr(update, tree)
+        if tree == None:
+            return
+        toWrite = write_expr(tree) + ');\n';
+    
+    # if update is if statement
+    elif re.search(r'^\s*\(#ifMInt', update):
+        m = re.search(r'^\s*\(#ifMInt (.+) #then (.+) #else (.+) #fi\)', update)
+        if m == None:
+            logging.error('If statement is not matched!!')
+        ifExpr = de_bracket(m.group(1))
+        thenExpr = de_bracket(m.group(2))
+        elseExpr = de_bracket(m.group(3))
+        toWrite = "Ite( "+translate(ifExpr)+', '+translate(thenExpr)+', '+translate(elseExpr)+'));\n'
+        
+    if fWrite != None:        
+        fWrite.write(toWrite)
+    else:
+        return toWrite
+
+
+def translate_reg(reg, isReg, fWrite):
+
+    if re.search(r'^"(\w+)"$', reg):
+        m = re.search(r'^"(\w+)"$', reg)
+        regPrint = m.group(1)
+        if is_flag(regPrint) == False:
+            isReg = 1
+
+    elif reg[0:13] == 'convToRegKeys':
+        m = re.search(r'convToRegKeys\((\w+)\)', reg)
+        regPrint = m.group(1)
+        isReg = 1
+
+    if isReg == 0:
+        fWrite.write("instr.SetUpdate("+regPrint+", ")
+    else:
+        fWrite.write("UPDATE_R("+regPrint+", ")
+
+
 def process_file(readPath, writePath, fileName):
+
+    # file operations
     fRead = open(readPath+'/'+fileName, "r")
     m = re.search(r'^(.+)\.k$', fileName)
     fWriteName = m.group(1)+'.cc'
     instName = m.group(1)
     fWrite = open(writePath+'/'+fWriteName, "w")
     fReadLines = fRead.readlines()
-    phase = 0    
-    updateRIP = 0
-    for line in fReadLines:
-        isReg = 0
-        if phase == 0:
-            if re.search("module", line):
-                phase = 1
-                fWrite.write("auto instr = model.NewInstr(\""+instName+"\");\n")                
-
-        # if in module
-        if phase == 1:
-            if re.search("<k>", line):
-                phase = 2
-
-        # if in <k>
-        if phase == 2:
-            if re.search("<regstate>", line):
-                phase = 3
-
-        # if in <regstate>
-        if phase == 3:
-            if re.search(r'endmodule', line):
-                phase = 4
-                continue
-            if re.search(r'<k>', line):
-                phase = 2
-                continue
-            p = re.compile(r'(\S+) \|-> (.+)')
-            res = p.search(line)
-            if res == None:
-                continue
-            reg = res.group(1)
-            update = res.group(2)
-
-            # parse reg
-            if re.search(r'^"(\w+)"$', reg):
-                m = re.search(r'^"(\w+)"$', reg)
-                regPrint = m.group(1)
-                if is_flag(regPrint) == False:
-                    isReg = 1
-            elif reg[0:13] == 'convToRegKeys':
-                m = re.search(r'convToRegKeys\((\w+)\)', reg)
-                regPrint = m.group(1)
-                isReg = 1
-
-            # parse update
-            if update == '(undefMInt)':
-                continue
-            # if update is a machine integer
-            elif update[0:2] == 'mi':
-                m = re.search(r'mi\((\d+), (\d+)\)', update)
-                if m == None:
-                    logging.error('Not a valid machine integer!!')
-                bitWidth = m.group(1)
-                value = m.group(2)
-                if isReg == 0:
-                    fWrite.write("instr.SetUpdate("+regPrint+", bv("+value+"));\n")
-                else:
-                    fWrite.write("UPDATE_R("+regPrint+", bv("+value+"));\n")
-
-            # if update is an expression
-            elif re.search(r'^\w+MInt', update):
-                tree = BTree(name=None)
-                tree = parse_expr(update, tree)
-                if tree == None:
-                    return
-                if isReg == 0:
-                    fWrite.write("instr.SetUpdate("+regPrint+", ")
-                else:
-                    fWrite.write("UPDATE_R("+regPrint+", ")
-                toWrite = write_expr(tree)
-                fWrite.write(toWrite+');\n')
     
-            # if update is if statement
-            elif re.search(r'^\s*\(#ifMInt', update):
-                m = re.search(r'^\s*\(#ifMInt (.+) #then (.+) #else (.+) #fi\)', update)
-                if m == None:
-                    logging.error('If statement is not matched!!')
-                ifExpr = de_bracket(m.group(1))
-                thenExpr = de_bracket(m.group(2))
-                elseExpr = de_bracket(m.group(3))
-                if isReg == 0:                    
-                    fWrite.write("instr.SetUpdate("+regPrint+", ")
-                else:
-                    fWrite.write("UPDATE_R("+regPrint+", ")
-                toWrite = "Ite( "+translate(ifExpr)+', '+translate(thenExpr)+', '+translate(elseExpr)+'));\n'
-                fWrite.write(toWrite)
+    # flags and data structures
+    updateRIP = 0
+    regs = []
+    updates = defaultdict(list)
+    conditions = []
+    lastLineIsRegState = False
 
-                #while m = re.search(r'^\s*(\w+)MInt\( (\w+)MInt\((.*)\)|getParentValue\((.*)\)|(mi.*)(, )', update):
+    # collect updates from file
+    for line in fReadLines:
+        if re.search(r'\|->', line):
+            m = re.search(r'(\S+) \|-> (.+)', line)
+            reg = m.group(1)
+            update = m.group(2)
+            if reg not in updates:
+                regs.append(reg)
+            updates[reg].append(update)
+        elif re.search(r'</regstate>', line):
+            lastLineIsRegState = True
+        elif re.search(r'requires', line) and lastLineIsRegState:
+            m = re.search(r'^\s*requires (.+)$', line)
+            conditions.append(m.group(1))
+            lastLineIsRegState = False
 
-        if phase == 4:
-            if updateRIP == 0:
-                fWrite.write("instr.SetUpdate(rip, nxt_rip);\n")
-            fWrite.write('RECORD_INST("'+instName+'");\n')
-            fWrite.close()
-            fRead.close()
-            return True
+    # parse updates data structure and write to file
+    for reg in regs:
+
+        if reg == 'PC' or reg == 'pc':
+            updateRIP = 1
+        isReg = 0
+
+        # parse reg
+        translate_reg(reg, isReg, fWrite)
+        updateList = updates[reg]
+        listLen = len(updateList)
+
+        for idx, update in enumerate(updateList):
+            if idx < listLen - 1:
+                fWrite.write("Ite( "+ translate(conditions[idx]) + ', ' + translate_update(update) + ', ' )
+            else:
+                fWrite.write(translate_update(update))
+
+        for i in range(len(updateList)):
+            fWrite.write(')')
+        fWrite.write(';\n')
+            
+    if updateRIP == 0:
+        fWrite.write("instr.SetUpdate(rip, nxt_rip);\n")
+    fWrite.write('RECORD_INST("'+instName+'");\n')
+    fWrite.close()
+    fRead.close()
+    return True
+
 
 if __name__ == "__main__":
     process_file(sys.argv[1], sys.argv[2], sys.argv[3])

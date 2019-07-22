@@ -1,0 +1,68 @@
+	Merging UTInstructionsPath
+On branch master
+Your branch is up-to-date with 'origin/master'.
+nothing to commit, working directory clean
+time  kompile x86-semantics.k --syntax-module X86-SYNTAX --main-module \
+    X86-SEMANTICS --debug -v --backend java -I common 
+Parse command line options                                   =  0.000s
+Importing: Source(/workspace/tools/x86_K_semantics/X86-64-semantics/semantics/./x86-semantics.k)
+Importing: Source(/workspace/tools/Kframework/k/k-distribution/target/release/k/include/builtin/prelude.k)
+Importing: Source(/workspace/tools/Kframework/k/k-distribution/target/release/k/include/builtin/kast.k)
+Importing: Source(/workspace/tools/Kframework/k/k-distribution/target/release/k/include/builtin/domains.k)
+Importing: Source(/workspace/tools/x86_K_semantics/X86-64-semantics/semantics/./x86-semantics.k)
+Importing: Source(/workspace/tools/x86_K_semantics/X86-64-semantics/semantics/x86-loader.k)
+Importing: Source(/workspace/tools/x86_K_semantics/X86-64-semantics/semantics/x86-configuration.k)
+Importing: Source(/workspace/tools/x86_K_semantics/X86-64-semantics/semantics/x86-syntax.k)
+Importing: Source(/workspace/tools/x86_K_semantics/X86-64-semantics/semantics/x86-abstract-syntax.k)
+Importing: Source(/workspace/tools/x86_K_semantics/X86-64-semantics/semantics/x86-memory.k)
+Importing: Source(/workspace/tools/x86_K_semantics/X86-64-semantics/semantics/x86-mint-wrapper.k)
+Importing: Source(/workspace/tools/x86_K_semantics/X86-64-semantics/semantics/x86-float-conversions.k)
+Importing: Source(/workspace/tools/x86_K_semantics/X86-64-semantics/semantics/common/common-memory.k)
+Importing: Source(/workspace/tools/x86_K_semantics/X86-64-semantics/semantics/x86-env-init.k)
+Importing: Source(/workspace/tools/x86_K_semantics/X86-64-semantics/semantics/x86-fetch-execute.k)
+Importing: Source(/workspace/tools/x86_K_semantics/X86-64-semantics/semantics/x86-abstract-semantics.k)
+Importing: Source(/workspace/tools/x86_K_semantics/X86-64-semantics/semantics/x86-flag-checks.k)
+Importing: Source(/workspace/tools/x86_K_semantics/X86-64-semantics/semantics/x86-flag-checks-syntax.k)
+Importing: Source(/workspace/tools/x86_K_semantics/X86-64-semantics/semantics/x86-instructions-semantics.k)
+Importing: Source(/workspace/tools/x86_K_semantics/X86-64-semantics/semantics/x86-commom-memory-clib-interface.k)
+Importing: Source(/workspace/tools/x86_K_semantics/X86-64-semantics/semantics/common/common-utils.k)
+Importing: Source(/workspace/tools/x86_K_semantics/X86-64-semantics/semantics/common/common-error.k)
+Importing: Source(/workspace/tools/x86_K_semantics/X86-64-semantics/semantics/common/library/common-c-library.k)
+Importing: Source(/workspace/tools/x86_K_semantics/X86-64-semantics/semantics/common/library/common-c-library-configuration.k)
+Importing: Source(/workspace/tools/x86_K_semantics/X86-64-semantics/semantics/common/library/common-c-library-utils.k)
+Importing: Source(/workspace/tools/x86_K_semantics/X86-64-semantics/semantics/common/library/common-c-library-io.k)
+Importing: Source(/workspace/tools/x86_K_semantics/X86-64-semantics/semantics/common/library/common-c-library-stdio.k)
+Importing: Source(/workspace/tools/x86_K_semantics/X86-64-semantics/semantics/common/library/common-c-library-stdlib.k)
+Importing: Source(/workspace/tools/x86_K_semantics/X86-64-semantics/semantics/x86-builtin.k)
+Importing: Source(/workspace/tools/x86_K_semantics/X86-64-semantics/semantics/x86-c-library.k)
+org.kframework.utils.errorsystem.KEMException: [Error] Compiler: Had 4 parsing errors.
+	at org.kframework.utils.errorsystem.KEMException.create(KEMException.java:110)
+	at org.kframework.utils.errorsystem.KEMException.compilerError(KEMException.java:68)
+	at org.kframework.kompile.DefinitionParsing.throwExceptionIfThereAreErrors(DefinitionParsing.java:184)
+	at org.kframework.kompile.DefinitionParsing.saveCachesAndReportParsingErrors(DefinitionParsing.java:148)
+	at org.kframework.kompile.DefinitionParsing.parseDefinitionAndResolveBubbles(DefinitionParsing.java:177)
+	at org.kframework.kompile.Kompile.parseDefinition(Kompile.java:135)
+	at org.kframework.kompile.Kompile.run(Kompile.java:118)
+	at org.kframework.kompile.KompileFrontEnd.run(KompileFrontEnd.java:70)
+	at org.kframework.main.FrontEnd.main(FrontEnd.java:59)
+	at org.kframework.main.Main.runApplication(Main.java:119)
+	at org.kframework.main.Main.runApplication(Main.java:108)
+	at org.kframework.main.Main.main(Main.java:54)
+[Error] Critical: Unexpected sort K for term V. Expected KItem.
+	Source(/workspace/tools/x86_K_semantics/X86-64-semantics/semantics/common/common-utils.k)
+	Location(16,40,16,41)
+[Error] Critical: Unexpected sort K for term V. Expected KLabel.
+	Source(/workspace/tools/x86_K_semantics/X86-64-semantics/semantics/common/common-utils.k)
+	Location(16,40,16,41)
+[Error] Critical: Unexpected sort K for term parsed as production syntax K ::=
+".K" [klabel(#EmptyK) symbol() unparseAvoid()]. Expected KItem.
+	Source(/workspace/tools/x86_K_semantics/X86-64-semantics/semantics/common/library/common-c-library-stdio.k)
+	Location(1094,33,1094,35)
+[Error] Inner Parser: Parse error: unexpected token '#tell'.
+	Source(/workspace/tools/x86_K_semantics/X86-64-semantics/semantics/common/library/common-c-library-io.k)
+	Location(289,19,289,24)
+
+real	1m40.819s
+user	4m18.880s
+sys	0m6.824s
+
