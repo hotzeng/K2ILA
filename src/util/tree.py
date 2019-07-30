@@ -3,6 +3,7 @@ class BTree(object):
     def __init__(self, name='root', children=None):
         self.name = name
         self.children = []
+        #self.width = None
         if children is not None:
             for child in children:
                 self.add_child(child)
@@ -21,3 +22,9 @@ class BTree(object):
         assert len(self.children) == 0
         for i in range(no):
             self.children.append(None)
+
+    #def set_width(self, width):
+    #    self.width = width
+
+    #def width(self):
+    #    return self.width

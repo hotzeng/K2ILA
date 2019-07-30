@@ -27,8 +27,8 @@ def main():
     # FIXME: Change the readPath and writePath to operate on different files!
     #readPath = '../x86_k/semantics/immediateInstructions'
     #writePath = '../x86_ila/semantics/immediateInstructions'
-    readPath = '../x86_k/semantics/registerInstructions'
-    writePath = '../x86_ila/semantics/registerInstructions'
+    readPath = '../x86_k/semantics/immediateInstructions'
+    writePath = '../x86_ila/semantics/immediateInstructions'
     passedFiles = '/workspace/research/ILA/x86/K2ILA/src/results/passed.txt'
     failedFiles = '/workspace/research/ILA/x86/K2ILA/src/results/failed.txt'
     fileName = None
@@ -42,7 +42,7 @@ def main():
         passFile = open(passedFiles, 'w')
         failFile = open(failedFiles, 'w')
         for fileName in os.listdir(readPath):
-            if re.search(r'xmm', fileName) or re.search(r'ymm', fileName):
+            if re.search(r'xmm', fileName) or re.search(r'ymm', fileName) or re.search(r'swp', fileName) or re.search(r'swo', fileName):
                 continue
             if MULTI_PROCESS == False:
                 process_file(readPath, writePath, fileName)
